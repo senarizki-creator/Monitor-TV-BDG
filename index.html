@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Live Monitoring - Antrian Service Motor Listrik</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #D5101C;
+  --red-glow: rgba(213,16,28,0.35);
+  --ink: #EEF0F2;
+  --mut: #9AA0A8;
+  --line: #272B30;
+  --bg: #0A0C0E;
+  --card: #13161A;
+  --card-sub: #1A1E23;
+  --ok: #1C8A4C;
+  --ok-glow: rgba(28,138,76,0.3);
+  --warn: #D98200;
+  --blue: #2670E8;
+}
+
+* { box-sizing: border-box; }
+
+/* LAYOUT MENGIKUTI UKURAN LAYAR TV DENGAN PADDING 3MM */
+html, body {
+  margin: 0;
+  padding: 3mm;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.3 Barlow, system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* TV CONTAINER */
+.tv-app {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* HEADER TV */
+header {
+  background: #111417;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--red);
+  border-radius: 8px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 12px;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-section h1 {
+  font: 800 clamp(18px, 1.8vw, 24px) 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+  margin: 0;
+  text-transform: uppercase;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.badge-live {
+  background: var(--red);
+  color: #fff;
+  font: 700 11px 'Barlow Condensed', sans-serif;
+  letter-spacing: 1px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  animation: pulse-live 2s infinite;
+}
+@keyframes pulse-live {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* BADGE CABANG KHUSUS TV */
+.site-pill {
+  background: #20242A;
+  border: 1px solid #383E47;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.site-pill:hover, .site-pill:focus {
+  background: #2D333B;
+  border-color: var(--red);
+  outline: none;
+}
+.site-pill b {
+  color: #FFB3B8;
+  font-size: 15px;
+  letter-spacing: 0.5px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.clk {
+  font: 700 clamp(18px, 1.8vw, 24px) 'Barlow Condensed', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: #1C2025;
+  border: 1px solid #333840;
+  padding: 3px 12px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.btn-icon {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font: 600 13px Barlow, sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+.btn-icon:hover, .btn-icon:focus {
+  background: #262B32;
+  color: #fff;
+  border-color: var(--red);
+  outline: none;
+}
+
+/* AREA UTAMA (FLEXIBLE HEIGHT) */
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 1. GRID STALLS (UPPER ~55%) */
+.grid-stalls {
+  flex: 1.15;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.stall-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  border-top: 5px solid var(--red);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  height: 100%;
+}
+.stall-card.free {
+  border-top-color: var(--ok);
+  background: linear-gradient(180deg, rgba(28,138,76,0.08) 0%, var(--card) 100%);
+}
+.stall-card.busy {
+  border-top-color: var(--red);
+  box-shadow: 0 0 20px rgba(213,16,28,0.15);
+  background: linear-gradient(180deg, rgba(213,16,28,0.08) 0%, var(--card) 100%);
+}
+
+.stall-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.stall-name {
+  font: 800 clamp(16px, 1.5vw, 20px) 'Barlow Condensed', sans-serif;
+  letter-spacing: 0.5px;
+  color: #fff;
+  text-transform: uppercase;
+}
+.stall-status {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 99px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.status-busy { background: var(--red); color: #fff; }
+.status-free { background: rgba(28,138,76,0.2); color: #4ADE80; border: 1px solid var(--ok); }
+
+.stall-body {
+  margin: 6px 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.stall-body .q-num {
+  font: 800 clamp(44px, 5.5vw, 72px)/1 'Barlow Condensed', sans-serif;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+.stall-body .free-text {
+  font: 700 clamp(24px, 3vw, 36px)/1.1 'Barlow Condensed', sans-serif;
+  color: #4ADE80;
+}
+.stall-body .free-desc {
+  color: var(--mut);
+  font-size: 13.5px;
+  margin-top: 4px;
+}
+
+.vehicle-info {
+  margin-top: 6px;
+  font-size: clamp(14px, 1.4vw, 18px);
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.vehicle-model {
+  color: #B5BAC1;
+  font-size: clamp(13px, 1.2vw, 15px);
+  font-weight: 500;
+}
+.service-type {
+  display: inline-block;
+  background: #252A30;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #BAC2CB;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.stall-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.stall-footer .label {
+  font-size: 12px;
+  color: var(--mut);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.stall-footer .timer {
+  font: 700 clamp(20px, 2.2vw, 30px) 'Barlow Condensed', sans-serif;
+  font-variant-numeric: tabular-nums;
+  color: #FFA5AB;
+}
+
+/* 2. LOWER SECTION (COLUMNS ~45%) */
+.layout-cols {
+  flex: 0.85;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 800px) {
+  .layout-cols { grid-template-columns: 1fr; }
+}
+
+.section-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+.section-title h2 {
+  font: 700 clamp(16px, 1.5vw, 19px) 'Barlow Condensed', sans-serif;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #fff;
+}
+.badge-count {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  padding: 2px 9px;
+  border-radius: 99px;
+  font: 700 13px 'Barlow Condensed', sans-serif;
+  color: #fff;
+}
+
+/* SCROLLABLE QUEUE LISTS */
+.wait-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+  padding-right: 4px;
+}
+.wait-grid::-webkit-scrollbar, .done-list::-webkit-scrollbar { width: 5px; }
+.wait-grid::-webkit-scrollbar-thumb, .done-list::-webkit-scrollbar-thumb { background: #333840; border-radius: 4px; }
+
+.wait-chip {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.wait-chip .q-no {
+  font: 800 clamp(22px, 2.2vw, 28px)/1 'Barlow Condensed', sans-serif;
+  color: var(--red);
+}
+.wait-chip .seq {
+  font-size: 11px;
+  color: var(--mut);
+  margin-top: 2px;
+}
+.wait-chip .veh {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wait-chip .dur {
+  font-size: 11.5px;
+  color: #E2B771;
+  font-weight: 600;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.done-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+.done-item {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ok);
+  border-radius: 6px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.done-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.done-no {
+  font: 800 clamp(20px, 2vw, 24px)/1 'Barlow Condensed', sans-serif;
+  color: #4ADE80;
+}
+.done-info {
+  font-size: 13px;
+}
+.done-info b { color: #fff; }
+.done-info span { color: var(--mut); font-size: 11.5px; display: block; }
+.done-time {
+  font: 700 14px 'Barlow Condensed', sans-serif;
+  color: #9AA0A8;
+}
+
+/* FOOTER BAR (COMPACT) */
+.footer-bar {
+  background: #111417;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  color: var(--mut);
+  font-size: 12.5px;
+}
+.footer-bar b { color: #fff; }
+
+.empty-state {
+  color: var(--mut);
+  font-size: 13px;
+  padding: 16px;
+  text-align: center;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  margin: auto;
+  width: 100%;
+}
+
+/* MODAL PEMILIHAN CABANG (REMOTE FRIENDLY) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+.modal-overlay.hide { display: none; }
+.modal-card {
+  background: var(--card);
+  border: 2px solid var(--red);
+  border-radius: 12px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  text-align: center;
+}
+.modal-card h3 {
+  font: 800 24px 'Barlow Condensed', sans-serif;
+  text-transform: uppercase;
+  margin: 0 0 8px;
+  color: #fff;
+}
+.modal-card p {
+  color: var(--mut);
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+.site-btn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.site-choice-btn {
+  background: var(--card-sub);
+  border: 1px solid var(--line);
+  color: #fff;
+  padding: 14px 10px;
+  border-radius: 8px;
+  font: 700 18px 'Barlow Condensed', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.site-choice-btn:hover, .site-choice-btn:focus {
+  background: var(--red);
+  border-color: var(--red);
+  transform: scale(1.04);
+  outline: none;
+}
+.site-choice-btn.active {
+  background: var(--red);
+  border-color: var(--red);
+}
+</style>
+</head>
+<body>
+
+<div class="tv-app">
+  <!-- HEADER -->
+  <header>
+    <div class="brand-section">
+      <div class="badge-live">Live TV</div>
+      <h1>Monitoring Antrian Service</h1>
+      <!-- Badge Cabang Monitor TV Paten: BDG -->
+      <div class="site-pill" id="btnSitePill" style="cursor:default;" title="Cabang Monitor TV: BDG (Paten)">
+        Cabang: <b id="siteBadgeTxt">BDG</b>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <div class="clk" id="clk">--:--:--</div>
+      <button class="btn-icon" onclick="toggleAudio()" id="btnAudio" title="Nyalakan/Matikan Audio">🔊 Suara</button>
+      <button class="btn-icon" onclick="toggleFullscreen()" title="Layar Penuh (F11)">⛶ Layar Penuh</button>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT (STALLS + QUEUES) -->
+  <main>
+    <!-- STALLS GRID -->
+    <div class="grid-stalls" id="stallsGrid">
+      <!-- Diisi otomatis oleh JavaScript -->
+    </div>
+
+    <!-- LOWER LISTS -->
+    <div class="layout-cols">
+      <!-- MENUNGGU DIPANGGIL -->
+      <div class="section-card">
+        <div class="section-title">
+          <h2>⏳ Menunggu Dipanggil</h2>
+          <span class="badge-count" id="countWaiting">0 Unit</span>
+        </div>
+        <div class="wait-grid" id="waitGrid">
+          <div class="empty-state">Tidak ada antrian menunggu</div>
+        </div>
+      </div>
+
+      <!-- INVOICE HARI INI -->
+      <div class="section-card">
+        <div class="section-title">
+          <h2>✅ Selesai Hari Ini</h2>
+          <span class="badge-count" id="countDone">0 Unit</span>
+        </div>
+        <div class="done-list" id="doneList">
+          <div class="empty-state">Belum ada unit selesai hari ini</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER STATS -->
+  <footer class="footer-bar">
+    <div>
+      <span id="infoBookingBelumHadir">Booking hari ini belum hadir: <b>0</b></span> &middot;
+      <span>Total diproses hari ini: <b id="infoTotalHariIni">0</b> unit</span>
+    </div>
+    <div>
+      <span>Layar Monitor Cabang: <b id="footerSiteName" style="color:#FFB3B8">-</b></span>
+    </div>
+  </footer>
+</div>
+
+<!-- MODAL PEMILIHAN CABANG UNTUK TV (DAPAT DIPILIH DENGAN REMOTE/KLIK) -->
+<div id="modalSiteSelect" class="modal-overlay hide">
+  <div class="modal-card">
+    <h3>Pilih Cabang Monitor TV</h3>
+    <p>Pilih cabang bengkel untuk menampilkan data antrian di layar TV ini:</p>
+    <div class="site-btn-grid" id="siteBtnContainer">
+      <!-- Diisi daftar tombol cabang -->
+    </div>
+    <button class="btn-icon" style="margin: 0 auto; padding: 8px 18px;" onclick="closeSiteModal()">Tutup</button>
+  </div>
+</div>
+
+<script>
+/* ================= KONFIGURASI GOOGLE SCRIPT ================= */
+const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJ0mOVPtf1moT3VY0zOmjZzlnw27QPFj030FfkOi0vPane6FZTGDG0DL1o3IsMsb_Low/exec";
+
+function getScriptUrl() {
+  try {
+    const cfg = JSON.parse(localStorage.getItem("sq_cfg") || "{}");
+    if (cfg.url !== DEFAULT_SCRIPT_URL) {
+      cfg.url = DEFAULT_SCRIPT_URL;
+      localStorage.setItem("sq_cfg", JSON.stringify(cfg));
+    }
+  } catch(e) {}
+  return DEFAULT_SCRIPT_URL;
+}
+
+/* ================= KUNCI CABANG TV PATEN: BDG ================= */
+const DEFAULT_SITE = "BDG";
+let activeSite = "BDG";
+let sites = ["BDG"];
+let siteStalls = JSON.parse(localStorage.getItem("sq_site_stalls") || '{"BDG":2}');
+
+// Kunci permanen ke storage browser TV
+localStorage.setItem("sq_tv_site", "BDG");
+localStorage.setItem("sq_active_site", "BDG");
+
+let audioEnabled = true;
+let isPulling = false;
+
+/* ================= HELPER FUNGSI ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+const hm = t => t ? new Date(t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-";
+const p2 = n => String(n).padStart(2, "0");
+const dur = s => s == null ? "-" : (s >= 3600 ? Math.floor(s / 3600) + ":" : "") + p2(Math.floor(s % 3600 / 60)) + ":" + p2(s % 60);
+const mins = (a, b) => a ? Math.max(0, Math.round(((b ? new Date(b) : new Date()) - new Date(a)) / 1e3)) : null;
+
+/* ================= NO PLAT MOTOR (TAMPIL LENGKAP TANPA SENSOR) ================= */
+// Menampilkan nomor plat motor secara utuh dan lengkap tanpa sensor
+function maskPlate(p) {
+  if (!p) return "-";
+  return String(p).trim().toUpperCase();
+}
+
+/* Local Records Cache: dimuat awal agar layar TV langsung tampil tanpa jeda */
+let records = JSON.parse(localStorage.getItem("sq_recs") || "[]");
+
+/* Update Tampilan Badge Cabang (Paten BDG) */
+function updateSiteBadgeUI() {
+  const b = $("#siteBadgeTxt");
+  if (b) b.textContent = "BDG";
+  const f = $("#footerSiteName");
+  if (f) f.textContent = "BDG";
+}
+
+/* Modal Pemilihan Cabang untuk Android TV */
+function openSiteModal() {
+  const c = $("#siteBtnContainer");
+  if (!c) return;
+  c.innerHTML = "";
+  const list = ["BDG"];
+  list.forEach(s => {
+    const btn = document.createElement("button");
+    btn.className = "site-choice-btn" + (s.toUpperCase() === activeSite.toUpperCase() ? " active" : "");
+    btn.textContent = s.toUpperCase();
+    btn.onclick = () => selectSite(s);
+    c.appendChild(btn);
+  });
+  $("#modalSiteSelect").classList.remove("hide");
+}
+
+function closeSiteModal() {
+  $("#modalSiteSelect").classList.add("hide");
+}
+
+function selectSite(s) {
+  activeSite = (s || "").toUpperCase();
+  localStorage.setItem("sq_tv_site", activeSite);
+  
+  // Update parameter URL tanpa reload agar rapi
+  const u = new URL(window.location);
+  u.searchParams.set("site", activeSite);
+  try { window.history.replaceState({}, "", u); } catch(e) {}
+  
+  // Reset pelacak status cabang sebelumnya agar tidak membunyikan data lama cabang baru
+  prevRecordsState.clear();
+  isFirstInit = true;
+
+  updateSiteBadgeUI();
+  closeSiteModal();
+  render();
+  fetchData();
+}
+
+/* ================= AUDIO & SUARA PENGUMUMAN TV (NADA MELODI + SUARA CEWEK) ================= */
+let audioCtx = null;
+
+// Membuka kunci AudioContext & Web Speech pada Android TV / Chrome
+function unlockAudio() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.resume();
+      const dummy = new SpeechSynthesisUtterance("");
+      window.speechSynthesis.speak(dummy);
+    }
+  } catch(e) {}
+}
+
+["click", "keydown", "touchstart", "pointerdown"].forEach(evt => {
+  document.addEventListener(evt, unlockAudio, { once: true });
+});
+
+// Preload daftar voice ketika tersedia di browser
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    getFemaleIndonesianVoice();
+  };
+}
+
+// 1. NADA CHIME KHAS BANDARA (Web Audio API)
+// Alunan 3 nada bel khas pengumuman bandara (D5 -> F#5 -> A5) yang jernih, tegas, dan elegan
+function playChimeMelody() {
+  return new Promise(resolve => {
+    if (!audioEnabled) return resolve();
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+
+      const now = audioCtx.currentTime;
+      // Melodi 3 nada bel bandara internasional (Ting - Nong - Ning)
+      const notes = [
+        { freq: 587.33, start: 0.00, dur: 0.30 }, // D5
+        { freq: 739.99, start: 0.22, dur: 0.30 }, // F#5
+        { freq: 880.00, start: 0.44, dur: 0.65 }  // A5
+      ];
+
+      notes.forEach(n => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(n.freq, now + n.start);
+
+        // Karakteristik bel bandara: ketukan awal jernih (attack cepat) lalu dengung memudar halus
+        gain.gain.setValueAtTime(0.0001, now + n.start);
+        gain.gain.exponentialRampToValueAtTime(0.28, now + n.start + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + n.start + n.dur);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + n.start);
+        osc.stop(now + n.start + n.dur + 0.05);
+      });
+
+      setTimeout(resolve, 1150);
+    } catch(e) {
+      console.warn("Chime error:", e);
+      resolve();
+    }
+  });
+}
+
+// 2. SUARA ANNOUNCER CEWEK BANDARA (Web Speech API)
+function getFemaleIndonesianVoice() {
+  if (!("speechSynthesis" in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (voices.length === 0) return null;
+
+  // Filter suara bahasa Indonesia
+  const idVoices = voices.filter(v => (v.lang || "").toLowerCase().replace("_", "-").includes("id"));
+  
+  // Prioritas suara announcer wanita Indonesia yang jernih, natural, dan formal (Edge / Google TTS)
+  const announcerKeywords = ["gadis", "siti", "ayu", "wulan", "natural", "female", "wanita", "perempuan", "google"];
+  for (const kw of announcerKeywords) {
+    const found = idVoices.find(v => (v.name || "").toLowerCase().includes(kw));
+    if (found) return found;
+  }
+  if (idVoices.length > 0) return idVoices[0];
+
+  // Prioritas internasional jika ID tidak tersedia
+  for (const kw of ["natural", "female", "jenny", "aria", "samantha", "zira"]) {
+    const found = voices.find(v => (v.name || "").toLowerCase().includes(kw));
+    if (found) return found;
+  }
+
+  return voices[0];
+}
+
+function speakFemaleVoice(text) {
+  return new Promise(resolve => {
+    if (!audioEnabled || !("speechSynthesis" in window)) return resolve();
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "id-ID";
+      const voice = getFemaleIndonesianVoice();
+      if (voice) utter.voice = voice;
+
+      // Karakter suara announcer bandara cewek: profesional, ramah, artikulasi jelas & tegas
+      // pitch: 1.05 (suara wanita dewasa yang wibawa, tenang, dan jernih)
+      // rate: 0.90 (tempo pengumuman bandara standar, tidak terlalu lambat dan tidak terburu-buru)
+      // volume: 1.0
+      utter.pitch = 1.05;
+      utter.rate = 0.90;
+      utter.volume = 1.0;
+
+      let finished = false;
+      const done = () => {
+        if (!finished) {
+          finished = true;
+          resolve();
+        }
+      };
+
+      utter.onend = done;
+      utter.onerror = done;
+      setTimeout(done, 14000); // Batas aman jika event onend browser tidak tertrigger
+
+      window.speechSynthesis.speak(utter);
+    } catch(e) {
+      console.warn("TTS error:", e);
+      resolve();
+    }
+  });
+}
+
+// 3. ANNOUNCE QUEUE (Mencegah suara bertabrakan jika ada beberapa update bersamaan)
+const announceQueue = [];
+let isAnnouncing = false;
+
+function enqueueAnnouncement(item) {
+  if (!audioEnabled) return;
+  announceQueue.push(item);
+  processAnnounceQueue();
+}
+
+async function processAnnounceQueue() {
+  if (isAnnouncing || announceQueue.length === 0) return;
+  isAnnouncing = true;
+  const item = announceQueue.shift();
+  try {
+    // 1. Alunan nada melodi pembuka (chime)
+    await playChimeMelody();
+    // 2. Jeda hening 150ms
+    await new Promise(r => setTimeout(r, 150));
+    // 3. Suara cewek mengumumkan panggilan
+    await speakFemaleVoice(item.text);
+  } catch(e) {
+    console.warn(e);
+  } finally {
+    isAnnouncing = false;
+    // Jeda 600ms sebelum pengumuman berikutnya jika ada
+    if (announceQueue.length > 0) {
+      setTimeout(processAnnounceQueue, 600);
+    }
+  }
+}
+
+// 4. FORMAT PENGUCAPAN SUARA (Mengeja nomor antrian & plat motor agar terdengar jelas)
+function digitWord(d) {
+  const words = {
+    '0': 'kosong', '1': 'satu', '2': 'dua', '3': 'tiga', '4': 'empat',
+    '5': 'lima', '6': 'enam', '7': 'tujuh', '8': 'delapan', '9': 'sembilan'
+  };
+  return words[d] || d;
+}
+
+function formatQueueForSpeech(no) {
+  if (!no) return "";
+  const raw = String(no).trim().toUpperCase();
+  const res = [];
+  for (const ch of raw) {
+    if (ch === '0') res.push('kosong');
+    else if (ch >= '1' && ch <= '9') res.push(digitWord(ch));
+    else if (ch >= 'A' && ch <= 'Z') res.push(ch);
+  }
+  return res.join(" ");
+}
+
+function formatPlateForSpeech(plat) {
+  if (!plat) return "";
+  const raw = String(plat).trim().toUpperCase();
+  const parts = raw.split(/\s+/);
+  return parts.map(part => {
+    if (/^\d+$/.test(part)) {
+      return part.split("").map(digitWord).join(" ");
+    } else {
+      return part.split("").join(" ");
+    }
+  }).join(", ");
+}
+
+function formatStallForSpeech(stall) {
+  if (!stall) return "Stall satu";
+  const raw = String(stall).trim();
+  return raw.replace(/(\d+)/g, (m, n) => {
+    return " " + n.split("").map(digitWord).join(" ");
+  });
+}
+
+// 5. DETEKSI STATUS & ISOLASI CABANG KETAT (HANYA CABANG SAMA YANG BUNYI!)
+let prevRecordsState = new Map();
+let isFirstInit = true;
+const announcedKeys = new Map();
+
+function isWorkingStatus(st) {
+  return st === "Dikerjakan" || st === "Create SCL";
+}
+
+function isDoneStatus(st) {
+  return st === "Selesai" || st === "Invoice";
+}
+
+function announceStatus(r, actionType) {
+  // ATURAN MUTLAK: Cabang SA harus SAMA dengan Cabang TV ini!
+  const rSite = (r.site || "").toUpperCase();
+  const tvSite = (activeSite || "").toUpperCase();
+  if (rSite && tvSite && rSite !== tvSite) {
+    // Cabang berbeda: TV cabang ini TETAP DIAM (TIDAK BUNYI)!
+    return;
+  }
+
+  const dedupeKey = `${r.id}_${actionType}`;
+  const now = Date.now();
+  if (announcedKeys.has(dedupeKey) && (now - announcedKeys.get(dedupeKey) < 45000)) {
+    return; // Sudah diumumkan dalam 45 detik terakhir
+  }
+  announcedKeys.set(dedupeKey, now);
+
+  const speechNo = formatQueueForSpeech(r.no_antrian);
+  const speechPlat = formatPlateForSpeech(r.plat);
+  const speechStall = formatStallForSpeech(r.stall || "Stall 1");
+
+  let text = "";
+  if (actionType === "scl") {
+    // SA Klik "Create SCL" -> Masuk ke Stall (Gaya Announcer Bandara)
+    text = `Perhatian... Panggilan untuk nomor antrian, ${speechNo}... Dengan nomor plat, ${speechPlat}... Dipersilakan menuju ke ${speechStall}... Terima kasih...`;
+  } else if (actionType === "invoice") {
+    // SA Klik "Invoice" -> Servis Selesai Menuju Kasir (Gaya Announcer Bandara)
+    text = `Perhatian... Panggilan untuk nomor antrian, ${speechNo}... Dengan nomor plat, ${speechPlat}... Servis telah selesai, dipersilakan menuju ke bagian kasir... Terima kasih...`;
+  }
+
+  if (text) {
+    enqueueAnnouncement({ text, type: actionType, record: r });
+  }
+}
+
+function checkStatusTransitions(curRecs) {
+  const t = today();
+  // Filter HANYA untuk antrian cabang TV aktif hari ini
+  const relevantRecs = (curRecs || []).filter(r => 
+    (!r.site || r.site.toUpperCase() === activeSite.toUpperCase()) &&
+    r.tanggal === t
+  );
+
+  // Jika pertama kali halaman TV dimuat/refresh:
+  // Rekam semua data status yang ada ke memori tanpa membunyikan suara
+  if (isFirstInit) {
+    relevantRecs.forEach(r => {
+      prevRecordsState.set(r.id, { status: r.status, stall: r.stall, plat: r.plat, no_antrian: r.no_antrian });
+    });
+    isFirstInit = false;
+    return;
+  }
+
+  relevantRecs.forEach(r => {
+    const prev = prevRecordsState.get(r.id);
+    const curStatus = r.status;
+
+    if (!prev) {
+      // Record baru yang tiba-tiba muncul saat TV sedang beroperasi
+      if (isWorkingStatus(curStatus)) {
+        announceStatus(r, "scl");
+      } else if (isDoneStatus(curStatus)) {
+        announceStatus(r, "invoice");
+      }
+    } else {
+      // 1. SA klik "Create SCL" / Mulai Dikerjakan di Stall
+      if (!isWorkingStatus(prev.status) && isWorkingStatus(curStatus)) {
+        announceStatus(r, "scl");
+      }
+      // 2. SA klik "Invoice" / Selesai Servis
+      else if (!isDoneStatus(prev.status) && isDoneStatus(curStatus)) {
+        announceStatus(r, "invoice");
+      }
+    }
+
+    // Perbarui memori status
+    prevRecordsState.set(r.id, { status: curStatus, stall: r.stall, plat: r.plat, no_antrian: r.no_antrian });
+  });
+}
+
+// Tombol uji coba suara oleh teknisi/SA di layar TV
+function testAudioAnnouncement() {
+  unlockAudio();
+  const demoRec = {
+    site: activeSite,
+    no_antrian: "A001",
+    plat: "B 1234 XYZ",
+    stall: "Stall 1"
+  };
+  const speechNo = formatQueueForSpeech(demoRec.no_antrian);
+  const speechPlat = formatPlateForSpeech(demoRec.plat);
+  const speechStall = formatStallForSpeech(demoRec.stall);
+  const text = `Perhatian... Uji coba pengumuman suara TV cabang ${activeSite}... Panggilan untuk nomor antrian, ${speechNo}... Dengan nomor plat, ${speechPlat}... Dipersilakan menuju ke ${speechStall}... Terima kasih...`;
+  enqueueAnnouncement({ text, type: "test" });
+}
+
+function toggleAudio() {
+  audioEnabled = !audioEnabled;
+  $("#btnAudio").textContent = audioEnabled ? "🔊 Suara" : "🔇 Bisu";
+  $("#btnAudio").style.opacity = audioEnabled ? "1" : "0.6";
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(()=>{});
+  } else {
+    document.exitFullscreen().catch(()=>{});
+  }
+}
+
+/* WakeLock: Cegah TV Android masuk ke mode Sleep / Mati Layar */
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      await navigator.wakeLock.request('screen');
+    }
+  } catch(e) {}
+}
+requestWakeLock();
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+
+/* ================= KOMUNIKASI BROADCAST CHANNEL & STORAGE ================= */
+// Komunikasi instan antar tab jika SA & TV dites di browser/perangkat yang sama
+try {
+  if ('BroadcastChannel' in window) {
+    const tvBc = new BroadcastChannel("sq_tv_channel");
+    tvBc.onmessage = function(ev) {
+      const msg = ev.data;
+      if (!msg || msg.type !== "status_change") return;
+      // FILTER KETAT CABANG: Hanya jika cabang sama persis dengan TV ini!
+      if ((msg.site || "").toUpperCase() !== (activeSite || "").toUpperCase()) return;
+
+      if (isWorkingStatus(msg.status)) {
+        announceStatus(msg, "scl");
+      } else if (isDoneStatus(msg.status)) {
+        announceStatus(msg, "invoice");
+      }
+      render();
+    };
+  }
+} catch(e) {}
+
+// Listener Storage Event jika localStorage diubah oleh tab admin
+window.addEventListener("storage", ev => {
+  if (ev.key === "sq_recs" && ev.newValue) {
+    try {
+      const updated = JSON.parse(ev.newValue);
+      if (Array.isArray(updated)) {
+        records = updated;
+        render();
+        checkStatusTransitions(records);
+      }
+    } catch(e) {}
+  }
+});
+
+/* ================= PROSES DATA DARI SERVER GOOGLE SHEETS ================= */
+function applyMonitoringData(data) {
+  if (!data || !data.ok) return;
+
+  // 1. Sinkronkan daftar cabang dari Google Sheets
+  if (data.sites && Array.isArray(data.sites) && data.sites.length > 0) {
+    sites = data.sites;
+    localStorage.setItem("sq_sites", JSON.stringify(sites));
+  }
+
+  // 2. Sinkronkan data records
+  if (data.records && Array.isArray(data.records)) {
+    records = data.records;
+    try {
+      localStorage.setItem("sq_recs", JSON.stringify(records));
+    } catch(e) {}
+  }
+
+  // 3. Sinkronkan jumlah stall cabang ini
+  if (data.siteStalls && typeof data.siteStalls === "object") {
+    siteStalls = data.siteStalls;
+    localStorage.setItem("sq_site_stalls", JSON.stringify(siteStalls));
+  }
+
+  updateSiteBadgeUI();
+  render();
+  checkStatusTransitions(records);
+}
+
+/* ================= AMBIL DATA GOOGLE SHEETS (JSONP) ================= */
+function fetchData() {
+  const SCRIPT_URL = getScriptUrl();
+  if (!SCRIPT_URL) return;
+  if (isPulling) return;
+  isPulling = true;
+
+  const cbName = "sq_tv_cb_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+  const qUrl = SCRIPT_URL + (SCRIPT_URL.includes("?") ? "&" : "?") + 
+               "callback=" + cbName + 
+               (activeSite ? "&site=" + encodeURIComponent(activeSite) : "") + 
+               "&t=" + Date.now();
+
+  const script = document.createElement("script");
+  script.src = qUrl;
+  script.async = true;
+
+  let loaded = false;
+
+  const cleanup = () => {
+    isPulling = false;
+    window[cbName] = function(lateData) {
+      if (lateData) {
+        try { applyMonitoringData(lateData); } catch(e) {}
+      }
+      delete window[cbName];
+    };
+    setTimeout(() => { delete window[cbName]; }, 45000);
+    if (script.parentNode) script.parentNode.removeChild(script);
+  };
+
+  window[cbName] = function(data) {
+    if (loaded) return;
+    loaded = true;
+    try {
+      applyMonitoringData(data);
+    } catch(err) {
+      console.error(err);
+    } finally {
+      cleanup();
+    }
+  };
+
+  script.onerror = function() {
+    if (loaded) return;
+    loaded = true;
+    cleanup();
+  };
+
+  setTimeout(() => {
+    if (!loaded) {
+      loaded = true;
+      cleanup();
+    }
+  }, 15000);
+
+  document.head.appendChild(script);
+}
+
+/* ================= RENDER MONITORING TV ================= */
+function render() {
+  const t = today();
+  // FILTER KETAT: Hanya tampilkan antrian cabang aktif TV ini pada hari ini
+  const todayRecs = records.filter(r => 
+    (!r.site || r.site.toUpperCase() === activeSite.toUpperCase()) &&
+    r.tanggal === t
+  );
+
+  // 1. DAFTAR STALL DINAMIS CABANG INI
+  const siteKey = (activeSite || "").toUpperCase();
+  const curStallCount = (siteStalls && siteStalls[siteKey] && parseInt(siteStalls[siteKey], 10) > 0)
+    ? parseInt(siteStalls[siteKey], 10)
+    : 2;
+  let stallList = Array.from({ length: curStallCount }, (_, i) => "Stall " + (i + 1));
+  const usedStalls = new Set(todayRecs.map(r => r.stall).filter(Boolean));
+  usedStalls.forEach(s => {
+    if (!stallList.includes(s)) stallList.push(s);
+  });
+  stallList.sort((a,b) => a.localeCompare(b, undefined, { numeric: true }));
+
+  // Render Stalls
+  const stallsHtml = stallList.map(stallName => {
+    const activeRec = todayRecs.find(r => (r.status === "Dikerjakan" || r.status === "Create SCL") && r.stall === stallName);
+    if (activeRec) {
+      return `
+        <div class="stall-card busy">
+          <div class="stall-header">
+            <span class="stall-name">${esc(stallName)}</span>
+            <span class="stall-status status-busy">Sedang Dikerjakan</span>
+          </div>
+          <div class="stall-body">
+            <div class="q-num">${esc(activeRec.no_antrian)}</div>
+            <div class="vehicle-info">
+              <span>${esc(maskPlate(activeRec.plat))}</span>
+              <span class="vehicle-model">&bull; ${esc(activeRec.model || "Motor Listrik")}</span>
+            </div>
+            <div>
+              <span class="service-type">${esc(activeRec.layanan || "Service")}</span>
+            </div>
+          </div>
+          <div class="stall-footer">
+            <span class="label">Durasi Dikerjakan</span>
+            <span class="timer live-timer" data-start="${activeRec.mulai}">${dur(mins(activeRec.mulai))}</span>
+          </div>
+        </div>
+      `;
+    } else {
+      return `
+        <div class="stall-card free">
+          <div class="stall-header">
+            <span class="stall-name">${esc(stallName)}</span>
+            <span class="stall-status status-free">Tersedia</span>
+          </div>
+          <div class="stall-body">
+            <div class="free-text">STALL KOSONG</div>
+            <div class="free-desc">Siap menerima unit servis berikutnya</div>
+          </div>
+          <div class="stall-footer">
+            <span class="label">Status Stall</span>
+            <span style="font-weight:700;color:#4ADE80;font-size: clamp(14px, 1.4vw, 18px);">STANDBY</span>
+          </div>
+        </div>
+      `;
+    }
+  }).join("");
+  $("#stallsGrid").innerHTML = stallsHtml;
+
+  // 2. ANTRIAN MENUNGGU DIPANGGIL
+  const waitingRecs = todayRecs
+    .filter(r => r.status === "Hadir" || r.status === "Ambil Antrian")
+    .sort((a, b) => (a.checkin || "").localeCompare(b.checkin || ""));
+
+  $("#countWaiting").textContent = waitingRecs.length + " Unit";
+
+  if (waitingRecs.length === 0) {
+    $("#waitGrid").innerHTML = '<div class="empty-state">Tidak ada antrian menunggu</div>';
+  } else {
+    $("#waitGrid").innerHTML = waitingRecs.map((r, i) => `
+      <div class="wait-chip">
+        <div class="q-no">${esc(r.no_antrian)}</div>
+        <div class="seq">Urutan ke-${i + 1}</div>
+        <div class="veh">${esc(maskPlate(r.plat))}</div>
+        <div class="dur live-timer" data-start="${r.checkin}">Tunggu: ${dur(mins(r.checkin))}</div>
+      </div>
+    `).join("");
+  }
+
+  // 3. SELESAI / INVOICE HARI INI
+  const doneRecs = todayRecs
+    .filter(r => r.status === "Selesai" || r.status === "Invoice" || r.status === "FBB")
+    .sort((a, b) => (b.selesai || "").localeCompare(a.selesai || ""))
+    .slice(0, 8);
+
+  $("#countDone").textContent = doneRecs.length + " Unit";
+
+  if (doneRecs.length === 0) {
+    $("#doneList").innerHTML = '<div class="empty-state">Belum ada unit selesai hari ini</div>';
+  } else {
+    $("#doneList").innerHTML = doneRecs.map(r => `
+      <div class="done-item">
+        <div class="done-left">
+          <div class="done-no">${esc(r.no_antrian)}</div>
+          <div class="done-info">
+            <b>${esc(maskPlate(r.plat))} &middot; ${esc(r.model || "")}</b>
+            <span>${esc(r.layanan || "Service")}</span>
+          </div>
+        </div>
+        <div class="done-time">Selesai ${hm(r.selesai)}</div>
+      </div>
+    `).join("");
+  }
+
+  // 4. STATISTIK FOOTER
+  const bookingNotArrived = todayRecs.filter(r => r.status === "Booking").length;
+  $("#infoBookingBelumHadir").innerHTML = `Booking hari ini belum hadir: <b>${bookingNotArrived}</b>`;
+  $("#infoTotalHariIni").textContent = todayRecs.filter(r => r.status !== "Batal").length;
+}
+
+/* Tick clock & live timers (tiap 1 detik) */
+function tick() {
+  const n = new Date();
+  $("#clk").textContent = n.toLocaleDateString("id-ID", { day: "numeric", month: "short" }) + " " + n.toLocaleTimeString("id-ID");
+
+  document.querySelectorAll(".live-timer[data-start]").forEach(el => {
+    const s = el.dataset.start;
+    if (s) {
+      const isWait = el.classList.contains("dur");
+      const d = dur(mins(s));
+      el.textContent = isWait ? "Tunggu: " + d : d;
+    }
+  });
+}
+
+// Inisialisasi awal
+updateSiteBadgeUI();
+render();
+fetchData();
+tick();
+
+setInterval(tick, 1000);
+setInterval(fetchData, 8000); // Polling otomatis tiap 8 detik
+</script>
+</body>
+</html>
