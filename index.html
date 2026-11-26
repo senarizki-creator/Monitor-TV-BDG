@@ -297,12 +297,14 @@ main {
   flex: 0.85;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
+  grid-template-columns: 1.15fr 1fr 1fr;
   gap: 10px;
 }
-@media (max-width: 800px) {
+
+@media (max-width: 950px) {
   .layout-cols { grid-template-columns: 1fr; }
 }
+
 
 .section-card {
   background: var(--card);
@@ -385,42 +387,120 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
-.done-list {
+/* FBB & DONE LIST STYLING & INFINITE CONTINUOUS AUTO-SCROLL (MUTER-MUTER TERUS) */
+.fbb-list, .done-list {
   flex: 1;
   min-height: 0;
+  overflow-y: hidden;
+  padding-right: 2px;
+  position: relative;
+}
+.fbb-list:hover, .done-list:hover {
   overflow-y: auto;
+}
+.fbb-list::-webkit-scrollbar, .done-list::-webkit-scrollbar { width: 4px; }
+.fbb-list::-webkit-scrollbar-thumb, .done-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+.ticker-wrap {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-right: 4px;
+  width: 100%;
 }
-.done-item {
+.ticker-orig, .ticker-clone {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.fbb-item, .done-item {
   background: var(--card-sub);
   border: 1px solid var(--line);
-  border-left: 4px solid var(--ok);
   border-radius: 6px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-}
-.done-left {
-  display: flex;
-  align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+  min-height: 66px;
+  box-sizing: border-box;
 }
-.done-no {
+.fbb-item {
+  border-left: 4px solid #D97706;
+}
+.done-item {
+  border-left: 4px solid var(--ok);
+}
+
+.fbb-no, .done-no {
   font: 800 clamp(20px, 2vw, 24px)/1 'Barlow Condensed', sans-serif;
-  color: #4ADE80;
+  min-width: 52px;
+  flex-shrink: 0;
 }
-.done-info {
+.fbb-no { color: #FBBF24; }
+.done-no { color: #4ADE80; }
+
+.item-info {
   font-size: 13px;
+  line-height: 1.35;
+  min-width: 0;
+  flex: 1;
 }
-.done-info b { color: #fff; }
-.done-info span { color: var(--mut); font-size: 11.5px; display: block; }
-.done-time {
-  font: 700 14px 'Barlow Condensed', sans-serif;
-  color: #9AA0A8;
+.item-info b {
+  color: #fff;
+  font-size: 13.5px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-info .sub-name {
+  color: #E2E4E7;
+  font-weight: 600;
+  font-size: 12px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-info .sub-desc {
+  color: var(--mut);
+  font-size: 11.5px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fbb-time, .done-time {
+  font: 700 13px 'Barlow Condensed', sans-serif;
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+.fbb-time { color: #FCD34D; }
+.done-time { color: #86EFAC; }
+
+.time-main {
+  font-size: 13.5px;
+}
+.time-sub {
+  font-size: 10.5px;
+  color: var(--mut);
+  display: block;
+  font-weight: 400;
+  margin-top: 2px;
 }
 
 /* FOOTER BAR (COMPACT) */
@@ -552,11 +632,22 @@ main {
         </div>
       </div>
 
-      <!-- INVOICE HARI INI -->
-      <div class="section-card">
+      <!-- KOTAK DAFTAR FBB (FINISH BELUM DIAMBIL) -->
+      <div class="section-card" style="border-top: 3px solid #D97706;">
         <div class="section-title">
-          <h2>✅ Selesai Hari Ini</h2>
-          <span class="badge-count" id="countDone">0 Unit</span>
+          <h2 style="color:#FBBF24">🛵 Belum Diambil (FBB)</h2>
+          <span class="badge-count" id="countFbb" style="border-color:#D97706;color:#FBBF24">0 Unit</span>
+        </div>
+        <div class="fbb-list" id="fbbList">
+          <div class="empty-state">Tidak ada unit FBB</div>
+        </div>
+      </div>
+
+      <!-- INVOICE HARI INI -->
+      <div class="section-card" style="border-top: 3px solid var(--ok);">
+        <div class="section-title">
+          <h2 style="color:#4ADE80">✅ Invoice Hari Ini</h2>
+          <span class="badge-count" id="countDone" style="border-color:var(--ok);color:#4ADE80">0 Unit</span>
         </div>
         <div class="done-list" id="doneList">
           <div class="empty-state">Belum ada unit selesai hari ini</div>
@@ -620,6 +711,7 @@ let isPulling = false;
 /* ================= HELPER FUNGSI ================= */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmtD = d => d ? new Date(d + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : "-";
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const hm = t => t ? new Date(t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "-";
 const p2 = n => String(n).padStart(2, "0");
@@ -1041,7 +1133,16 @@ try {
       } else if (isDoneStatus(msg.status)) {
         announceStatus(msg, "invoice");
       }
+      // Update data di memori TV secara instan
+      const rec = records.find(x => x.id === msg.id);
+      if (rec) {
+        rec.status = msg.status;
+        if (msg.status === "FBB" && !rec.selesai) rec.selesai = new Date().toISOString();
+        if ((msg.status === "Selesai" || msg.status === "Invoice") && !rec.selesai) rec.selesai = new Date().toISOString();
+        try { localStorage.setItem("sq_recs", JSON.stringify(records)); } catch(_) {}
+      }
       render();
+      fetchData();
     };
   }
 } catch(e) {}
@@ -1236,35 +1337,180 @@ function render() {
     `).join("");
   }
 
-  // 3. SELESAI / INVOICE HARI INI
-  const doneRecs = todayRecs
-    .filter(r => r.status === "Selesai" || r.status === "Invoice" || r.status === "FBB")
-    .sort((a, b) => (b.selesai || "").localeCompare(a.selesai || ""))
-    .slice(0, 8);
+  // 3. DAFTAR FBB (FINISH BELUM DIAMBIL)
+  // Menampilkan seluruh unit yang berstatus FBB di cabang ini (sama persis seperti di Menu Advisor)
+  const fbbRecs = records.filter(r => 
+    (!r.site || r.site.toUpperCase() === activeSite.toUpperCase()) &&
+    r.status === "FBB"
+  ).sort((a, b) => (b.selesai || b.tanggal || "").localeCompare(a.selesai || a.tanggal || "") || a.no_antrian.localeCompare(b.no_antrian));
 
-  $("#countDone").textContent = doneRecs.length + " Unit";
+  const countFbbEl = $("#countFbb");
+  if (countFbbEl) countFbbEl.textContent = fbbRecs.length + " Unit";
 
-  if (doneRecs.length === 0) {
-    $("#doneList").innerHTML = '<div class="empty-state">Belum ada unit selesai hari ini</div>';
-  } else {
-    $("#doneList").innerHTML = doneRecs.map(r => `
-      <div class="done-item">
-        <div class="done-left">
-          <div class="done-no">${esc(r.no_antrian)}</div>
-          <div class="done-info">
-            <b>${esc(maskPlate(r.plat))} &middot; ${esc(r.model || "")}</b>
-            <span>${esc(r.layanan || "Service")}</span>
-          </div>
+  const fbbItemHtml = r => `
+    <div class="fbb-item">
+      <div class="card-left">
+        <div class="fbb-no">${esc(r.no_antrian)}</div>
+        <div class="item-info">
+          <b>${esc(maskPlate(r.plat))} &middot; ${esc(r.model || "")}</b>
+          <span class="sub-name">${esc(r.nama)}${r.hp ? ` &middot; ${esc(r.hp)}` : ""}</span>
+          <span class="sub-desc">${esc(r.layanan || "Service")}${r.stall ? ` &middot; Eks ${esc(r.stall)}` : ""}${r.tanggal && r.tanggal !== today() ? ` &middot; (${fmtD(r.tanggal)})` : ""}</span>
         </div>
-        <div class="done-time">Selesai ${hm(r.selesai)}</div>
       </div>
-    `).join("");
+      <div class="fbb-time">
+        <div class="time-main">Selesai ${hm(r.selesai)}</div>
+        <span class="time-sub">${r.selesai ? dur(mins(r.selesai)) + ' lalu' : '-'}</span>
+      </div>
+    </div>
+  `;
+
+  const fbbListEl = $("#fbbList");
+  if (fbbListEl) {
+    if (fbbRecs.length === 0) {
+      fbbListEl.innerHTML = '<div class="empty-state">Tidak ada unit FBB</div>';
+      fbbListEl.dataset.sig = "";
+      if (loopScrollers["fbbList"]) {
+        cancelAnimationFrame(loopScrollers["fbbList"].rafId);
+        loopScrollers["fbbList"] = null;
+      }
+    } else {
+      const fbbSig = fbbRecs.map(r => r.id + "_" + r.status + "_" + (r.selesai || "")).join("|");
+      if (fbbListEl.dataset.sig !== fbbSig) {
+        fbbListEl.dataset.sig = fbbSig;
+        const itemsHtml = fbbRecs.map(fbbItemHtml).join("");
+        fbbListEl.innerHTML = `
+          <div class="ticker-wrap">
+            <div class="ticker-orig">${itemsHtml}</div>
+            <div class="ticker-clone" style="display:none">${itemsHtml}</div>
+          </div>
+        `;
+        initContinuousLoopScroller("fbbList");
+      }
+    }
   }
 
-  // 4. STATISTIK FOOTER
+  // 4. INVOICE HARI INI (Semua unit yang telah di-invoice hari ini tanpa batas potong)
+  const doneRecs = todayRecs
+    .filter(r => r.status === "Selesai" || r.status === "Invoice")
+    .sort((a, b) => (b.selesai || "").localeCompare(a.selesai || ""));
+
+  const countDoneEl = $("#countDone");
+  if (countDoneEl) countDoneEl.textContent = doneRecs.length + " Unit";
+
+  const doneItemHtml = r => `
+    <div class="done-item">
+      <div class="card-left">
+        <div class="done-no">${esc(r.no_antrian)}</div>
+        <div class="item-info">
+          <b>${esc(maskPlate(r.plat))} &middot; ${esc(r.model || "")}</b>
+          <span class="sub-name">${esc(r.nama)}${r.hp ? ` &middot; ${esc(r.hp)}` : ""}</span>
+          <span class="sub-desc">${esc(r.layanan || "Service")}${r.stall ? ` &middot; ${esc(r.stall)}` : ""}</span>
+        </div>
+      </div>
+      <div class="done-time">
+        <div class="time-main">Invoice ${hm(r.selesai)}</div>
+        <span class="time-sub">${r.selesai ? dur(mins(r.selesai)) + ' lalu' : '-'}</span>
+      </div>
+    </div>
+  `;
+
+  const doneListEl = $("#doneList");
+  if (doneListEl) {
+    if (doneRecs.length === 0) {
+      doneListEl.innerHTML = '<div class="empty-state">Belum ada unit invoice hari ini</div>';
+      doneListEl.dataset.sig = "";
+      if (loopScrollers["doneList"]) {
+        cancelAnimationFrame(loopScrollers["doneList"].rafId);
+        loopScrollers["doneList"] = null;
+      }
+    } else {
+      const doneSig = doneRecs.map(r => r.id + "_" + r.status + "_" + (r.selesai || "")).join("|");
+      if (doneListEl.dataset.sig !== doneSig) {
+        doneListEl.dataset.sig = doneSig;
+        const itemsHtml = doneRecs.map(doneItemHtml).join("");
+        doneListEl.innerHTML = `
+          <div class="ticker-wrap">
+            <div class="ticker-orig">${itemsHtml}</div>
+            <div class="ticker-clone" style="display:none">${itemsHtml}</div>
+          </div>
+        `;
+        initContinuousLoopScroller("doneList");
+      }
+    }
+  }
+
+  // 5. STATISTIK FOOTER
   const bookingNotArrived = todayRecs.filter(r => r.status === "Booking").length;
   $("#infoBookingBelumHadir").innerHTML = `Booking hari ini belum hadir: <b>${bookingNotArrived}</b>`;
   $("#infoTotalHariIni").textContent = todayRecs.filter(r => r.status !== "Batal").length;
+}
+
+/* ================= INFINITE CONTINUOUS AUTO-SCROLL (MUTER-MUTER TERUS) ================= */
+const loopScrollers = {};
+
+function initContinuousLoopScroller(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const origEl = el.querySelector(".ticker-orig");
+  const cloneEl = el.querySelector(".ticker-clone");
+  if (!origEl) return;
+
+  // Hentikan ticker sebelumnya jika ada
+  if (loopScrollers[id]) {
+    cancelAnimationFrame(loopScrollers[id].rafId);
+    loopScrollers[id] = null;
+  }
+
+  setTimeout(() => {
+    // Jika data muat tanpa scroll / tidak overflow
+    if (origEl.scrollHeight <= el.clientHeight + 4) {
+      if (cloneEl) cloneEl.style.display = "none";
+      el.scrollTop = 0;
+      return;
+    }
+
+    // Jika data melebihi kotak, tampilkan clone track agar loop berjalan mulus tanpa jeda
+    if (cloneEl) cloneEl.style.display = "flex";
+
+    const state = {
+      id,
+      el,
+      rafId: null,
+      isPaused: false,
+      pos: el.scrollTop || 0,
+      speed: 0.55 // Kecepatan kontinu santai (~33px/detik), nyaman dibaca di monitor TV
+    };
+    loopScrollers[id] = state;
+
+    el.onmouseenter = () => { state.isPaused = true; };
+    el.onmouseleave = () => { state.isPaused = false; };
+
+    function loopStep() {
+      if (!loopScrollers[id]) return;
+      const currentOrig = el.querySelector(".ticker-orig");
+      const currentClone = el.querySelector(".ticker-clone");
+      if (!currentOrig || !currentClone) return;
+
+      const loopDistance = currentClone.offsetTop - currentOrig.offsetTop;
+      if (loopDistance <= 10) {
+        state.rafId = requestAnimationFrame(loopStep);
+        return;
+      }
+
+      if (!state.isPaused) {
+        state.pos += state.speed;
+        if (state.pos >= loopDistance) {
+          state.pos -= loopDistance;
+        }
+        el.scrollTop = state.pos;
+      }
+
+      state.rafId = requestAnimationFrame(loopStep);
+    }
+
+    state.rafId = requestAnimationFrame(loopStep);
+  }, 100);
 }
 
 /* Tick clock & live timers (tiap 1 detik) */
@@ -1289,7 +1535,7 @@ fetchData();
 tick();
 
 setInterval(tick, 1000);
-setInterval(fetchData, 8000); // Polling otomatis tiap 8 detik
+setInterval(fetchData, 6000); // Polling otomatis tiap 8 detik
 </script>
 </body>
 </html>
